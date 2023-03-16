@@ -45,15 +45,13 @@ public partial class MainWindow : Window
 
         try
         {
-            GenMain.MainProc(FileTextBox.Text);
+            var res = GenMain.MainProc(FileTextBox.Text);
+            MessageBox.Show($"完了しました!\n次のフォルダに出力しました：{res}");
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
-
-
-        MessageBox.Show("完了しました!");
     }
 }

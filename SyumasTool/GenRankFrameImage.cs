@@ -15,13 +15,12 @@ namespace SyumasTool;
 
 internal class GenRankFrameImage
 {
-    public static bool Gen(string outputPath, DataTableCollection ranking)
+    public static bool Gen(string outputPath, DataTable ranking)
     {
-        var exePath = AppDomain.CurrentDomain.BaseDirectory;
-        var imagePath = Path.Combine(exePath, @"_image\frameDownW.png");
+        var frameImagePath = Path.Combine(Utils.BaseDir, @"_image\frameDownW.png");
 
         // フレーム読み込み
-        using var bitmap = SKBitmap.Decode(imagePath);
+        using var bitmap = SKBitmap.Decode(frameImagePath);
 
         using var surface = SKSurface.Create(new SKImageInfo(bitmap.Width, bitmap.Height + 30));
         var canvas = surface.Canvas;
@@ -57,12 +56,14 @@ internal class GenRankFrameImage
         //canvas.DrawRect(0, 0, canvas.LocalClipBounds.Width - 3, canvas.LocalClipBounds.Height - 3, paint);
 
         canvas.Flush();
+
         // PNG形式で保存します。
         string outputFile = Path.Combine(outputPath, "test.png");
         using (var output = File.Create(outputFile))
         {
             surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
         }
+
         return true;
     }
 
