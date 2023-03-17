@@ -15,6 +15,15 @@ namespace SyumasTool;
 
 internal class GenRankFrameImage
 {
+    readonly Dictionary<string, string> frameKinds = new()
+    {
+        { "D", "frameDownW.png" },
+        { "L", "frameLongW.png" },
+        { "N", "frameNewW.png" },
+        { "U", "frameUpW.png" },
+        { "K", "frameKeepW.png" },    // Keepの画像が無い！
+    };
+
     public static bool Gen(string outputPath, DataTable ranking)
     {
         var frameImagePath = Path.Combine(Utils.BaseDir, @"_image\frameDownW.png");
