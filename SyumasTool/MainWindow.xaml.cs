@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 
 namespace SyumasTool;
 
@@ -45,6 +46,9 @@ public partial class MainWindow : Window
 
         try
         {
+            this.Cursor = Cursors.Wait;
+            this.IsEnabled = false;
+
             var res = GenMain.MainProc(FileTextBox.Text);
             MessageBox.Show($"完了しました!\n次のフォルダに出力しました：{res}");
         }
@@ -52,6 +56,11 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(ex.Message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
+        }
+        finally
+        {
+            this.Cursor = Cursors.Arrow;
+            this.IsEnabled = true;
         }
     }
 }

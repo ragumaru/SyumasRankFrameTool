@@ -317,5 +317,4 @@ internal class GenRankFrameImage
 
         canvas.DrawText(text, point, paint);
     }
-
 }
