@@ -45,7 +45,9 @@ internal class GenMain
             // ランキングフレーム生成
             if (result.Tables.Contains(XlShRanking))
             {
-                GenRankFrameImage.Gen(outputPath, result.Tables[XlShRanking]);
+                var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
+                Directory.CreateDirectory(rankingOutputPath);
+                GenRankFrameImage.Gen(rankingOutputPath, result.Tables[XlShRanking]!);
             }
 
 

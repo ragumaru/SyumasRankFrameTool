@@ -3,6 +3,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,73 +11,174 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
+using System.Windows.Media;
 
 namespace SyumasTool;
 
 internal class GenRankFrameImage
 {
-    readonly Dictionary<string, string> frameKinds = new()
+    //class RowItem
+    //{
+    //    internal int Col { get; }
+    //    internal string Value { get; set; }
+
+    //    public RowItem(int col)
+    //    {
+    //        Col = col;
+    //        Value = "";
+    //    }
+
+    //    internal void SetValue(DataRow row)
+    //    {
+    //        Value = row[Col].ToString() ?? "";
+    //    }
+    //}
+
+    class RankingRowData
     {
-        { "D", "frameDownW.png" },
-        { "L", "frameLongW.png" },
-        { "N", "frameNewW.png" },
-        { "U", "frameUpW.png" },
-        { "K", "frameKeepW.png" },    // Keepの画像が無い！
+        /// <summary>順位</summary>
+        internal string Rank { get; }
+        /// <summary>順位差識別</summary>
+        internal string RankDiffMark { get; }
+        /// <summary>変動</summary>
+        internal string RankDiff { get; }
+        /// <summary>動画ID</summary>
+        internal string VideoID { get; }
+        /// <summary>タイトル</summary>
+        internal string VideoTitle { get; }
+        /// <summary>Pts</summary>
+        internal int Pts { get; }
+        /// <summary>登録</summary>
+        internal int Mylist { get; }
+        /// <summary>再生</summary>
+        internal int Play { get; }
+        /// <summary>作者</summary>
+        internal string Author { get; }
+        /// <summary>投稿日</summary>
+        internal DateTime PostDate { get; }
+        /// <summary>補足</summary>
+        internal string LongInfo { get; }
+
+        public RankingRowData(DataRow row)
+        {
+            Rank = row[0].ToString() ?? "";
+            RankDiffMark = row[1].ToString() ?? "";
+            RankDiff = row[3].ToString() ?? "";
+            VideoID = row[6].ToString() ?? "";
+            VideoTitle = row[8].ToString() ?? "";
+            Pts = int.Parse(row[9].ToString() ?? "0");
+            Mylist = int.Parse(row[10].ToString() ?? "0");
+            Play = int.Parse(row[11].ToString() ?? "0");
+            Author = row[12].ToString() ?? "";
+            PostDate = DateTime.Parse(row[13].ToString() ?? DateTime.MaxValue.ToString());
+            LongInfo = row[14].ToString() ?? "";
+        }
+    }
+
+    ///// <summary>
+    ///// ランキングシート列番号
+    ///// </summary>
+    //struct RankingColInfo
+    //{
+    //    /// <summary>順位</summary>
+    //    internal const int Rank = 0;
+    //    /// <summary>順位差識別</summary>
+    //    internal const int RankDiffMark = 1;
+    //    /// <summary>変動</summary>
+    //    internal const int RankDiff = 3;
+    //    /// <summary>動画ID</summary>
+    //    internal const int VideoID = 6;
+    //    /// <summary>タイトル</summary>
+    //    internal const int VideoTitle = 8;
+    //    /// <summary>Pts</summary>
+    //    internal const int Pts = 9;
+    //    /// <summary>登録</summary>
+    //    internal const int Mylist = 10;
+    //    /// <summary>再生</summary>
+    //    internal const int Play = 11;
+    //    /// <summary>作者</summary>
+    //    internal const int Author = 12;
+    //    /// <summary>投稿日</summary>
+    //    internal const int PostDate = 13;
+    //    /// <summary>補足</summary>
+    //    internal const int LongInfo = 14;
+    //}
+
+    static readonly Dictionary<string, (string frameFile, SKColor color)> FrameKinds = new()
+    {
+        { "U", ("frameUpW"  , SKColors.Red) },      // ランクアップ
+        { "D", ("frameDownW", SKColors.Blue) },     // ランクダウン
+        { "N", ("frameNewW" , SKColors.Green) },    // 新登場
+        { "H", ("frameUpW"  , SKColors.Red) },      // 初登場
+        { "K", ("frameKeepW", SKColors.Red) },      // キープ
+        { "S", ("frameUpW"  , SKColors.Red) },      // 再登場
+        { "L", ("frameLongW", SKColors.Orange) },   // 殿堂入り
     };
 
     public static bool Gen(string outputPath, DataTable ranking)
     {
-        var frameImagePath = Path.Combine(Utils.BaseDir, @"_image\frameDownW.png");
-
-        // フレーム読み込み
-        using var bitmap = SKBitmap.Decode(frameImagePath);
-
-        using var surface = SKSurface.Create(new SKImageInfo(bitmap.Width, bitmap.Height + 30));
-        var canvas = surface.Canvas;
-        canvas.DrawBitmap(bitmap, 0, 30);
-
-        // 順位
-        var rankWidth = DrawRank(canvas, "10");
-
-        // 動画名
-        DrawTitle(canvas, rankWidth + 20, "とどけ！あるある");
-
-        // ポイント等
-        DrawPoints(canvas, rankWidth + 20, "863pts 登録:106 再生:15,184");
-
-        // 投稿者等
-        DrawAuthor(canvas, bitmap.Width - 55, "佐伯氏 sm41747951 [2023/02/04]");
-
-        // 順位変動
-        DrawRankChange(canvas, "2(▼1)");
-
-        // 連続
-        DrawCont(canvas, bitmap.Width - 10, "2週連続2回目");
-
-
-
-        // 確認用枠線
-        using var paint = new SKPaint()
+        for (var i = 1; i < ranking.Rows.Count; i++)
         {
-            Color = SKColors.Red,
-            StrokeWidth = 1,
-            Style = SKPaintStyle.Stroke,
-        };
-        //canvas.DrawRect(0, 0, canvas.LocalClipBounds.Width - 3, canvas.LocalClipBounds.Height - 3, paint);
+            var data = new RankingRowData(ranking.Rows[i]);
 
-        canvas.Flush();
+            // "順位差識別"でフレームを決定
+            string frameImagePath;
 
-        // PNG形式で保存します。
-        string outputFile = Path.Combine(outputPath, "test.png");
-        using (var output = File.Create(outputFile))
-        {
-            surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
+            if (GenRankFrameImage.FrameKinds.TryGetValue(data.RankDiffMark, out var frameInfo))
+                frameImagePath = Path.Combine(Utils.BaseDir, "_image", frameInfo.frameFile + ".png");
+            else
+                throw new Exception($"この順位差識別は対応していません：\"{data.RankDiffMark}\"");
+
+            // フレーム画像読み込み
+            using var bitmap = SKBitmap.Decode(frameImagePath);
+
+            using var surface = SKSurface.Create(new SKImageInfo(bitmap.Width, bitmap.Height + 30));
+            var canvas = surface.Canvas;
+            canvas.DrawBitmap(bitmap, 0, 30);
+
+            // 順位
+            var rankWidth = DrawRank(canvas, frameInfo.color, data.Rank);
+
+            // 動画名
+            DrawTitle(canvas, rankWidth + 20, data.VideoTitle);
+
+            // ポイント等
+            DrawPoints(canvas, rankWidth + 20, $"{data.Pts}pts 登録:{data.Mylist} 再生:{data.Play}");
+
+            // 投稿者等
+            DrawAuthor(canvas, bitmap.Width - 55, $"{data.Author} {data.VideoID} [{data.PostDate:d}]");
+
+            // 順位変動
+            DrawRankChange(canvas, frameInfo.color, data.RankDiff);
+
+            // 連続
+            DrawCont(canvas, bitmap.Width - 10, data.LongInfo);
+
+
+
+            // 確認用枠線
+            using var paint = new SKPaint()
+            {
+                Color = SKColors.Red,
+                StrokeWidth = 1,
+                Style = SKPaintStyle.Stroke,
+            };
+            //canvas.DrawRect(0, 0, canvas.LocalClipBounds.Width - 3, canvas.LocalClipBounds.Height - 3, paint);
+
+            canvas.Flush();
+
+            // PNG形式で保存します。
+            string outputFile = Path.Combine(outputPath, $"ranking_{i}.png");
+            using (var output = File.Create(outputFile))
+            {
+                surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
+            }
         }
 
         return true;
     }
 
-    private static float DrawRank(SKCanvas canvas, string text)
+    private static float DrawRank(SKCanvas canvas, SKColor color, string text)
     {
         var point = new SKPoint(10, 90);
 
@@ -102,7 +204,7 @@ internal class GenRankFrameImage
         canvas.DrawText(text, point, paint);
 
         // 本体
-        paint.Color = SKColors.Blue;
+        paint.Color = color;
         paint.IsStroke = false;
         paint.Style = SKPaintStyle.Fill;
 
@@ -160,7 +262,7 @@ internal class GenRankFrameImage
         canvas.DrawText(text, point, paint);
     }
 
-    private static void DrawRankChange(SKCanvas canvas, string text)
+    private static void DrawRankChange(SKCanvas canvas, SKColor color, string text)
     {
         var point = new SKPoint(5, 28);
 
@@ -176,7 +278,7 @@ internal class GenRankFrameImage
 
         canvas.DrawText(text, point, paint);
 
-        paint.Color = SKColors.Blue;
+        paint.Color = color;
         paint.IsStroke = false;
         paint.Style = SKPaintStyle.Fill;
 
