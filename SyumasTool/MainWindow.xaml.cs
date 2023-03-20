@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
-using System;
+using Ookii.Dialogs.Wpf;
+using System.Configuration;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -16,6 +17,12 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        FileTextBox.Text = ConfigurationManager.AppSettings["ExcelFilePath"];
+        OutputFolderTextBox.Text = ConfigurationManager.AppSettings["OutputFolder"];
+    }
+
     private void FileBrowseButton_Click(object sender, RoutedEventArgs e)
     {
         var fileDialog = new OpenFileDialog()
@@ -30,7 +37,16 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ExecButton_Click(object sender, RoutedEventArgs e)
+    private void FolderBrowseButton_Click(object sender, RoutedEventArgs e)
+    {
+        var folderDialog = new VistaFolderBrowserDialog();
+        if (folderDialog.ShowDialog() == true)
+        {
+            OutputFolderTextBox.Text = folderDialog.SelectedPath;
+        }
+    }
+
+    private async void ExecButton_Click(object sender, RoutedEventArgs e)
     {
         if (String.IsNullOrEmpty(FileTextBox.Text))
         {
@@ -44,13 +60,25 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!Directory.Exists(OutputFolderTextBox.Text))
+        {
+            MessageBox.Show("画像出力フォルダが存在しません。");
+            return;
+        }
+
         try
         {
-            this.Cursor = Cursors.Wait;
-            this.IsEnabled = false;
+            Mouse.OverrideCursor = Cursors.Wait;
+            IsEnabled = false;
 
-            var res = GenMain.MainProc(FileTextBox.Text);
-            MessageBox.Show($"完了しました!\n次のフォルダに出力しました：{res}");
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            config.AppSettings.Settings["ExcelFilePath"].Value = FileTextBox.Text;
+            config.AppSettings.Settings["OutputFolder"].Value = OutputFolderTextBox.Text;
+            config.Save();
+
+            var res = await GenMain.MainProc(FileTextBox.Text, OutputFolderTextBox.Text);
+
+            MessageBox.Show($"完了しました!\n");
         }
         catch (Exception ex)
         {
@@ -59,7 +87,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            this.Cursor = Cursors.Arrow;
+            Mouse.OverrideCursor = null;
             this.IsEnabled = true;
         }
     }

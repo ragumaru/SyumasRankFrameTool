@@ -5,22 +5,37 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SyumasTool"
         mc:Ignorable="d"
-        Title="週マスランキング フレーム作成ツール" Height="190" Width="500">
-    <Grid Margin="10,20">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+        Title="週マスランキング フレーム作成ツール" Height="230" Width="500" Loaded="Window_Loaded">
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
-        <Label>ランキングExcelファイル名(.xls,.xlsx)</Label>
-        <TextBox Name="FileTextBox" Margin="0,0,5,0" Padding="5" Grid.Row="1"></TextBox>
-        <Button Click="FileBrowseButton_Click" Padding="10,0" Grid.Row="1" Grid.Column="1">...</Button>
-        <Button Click="ExecButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="20,8" Grid.Row="2" Grid.ColumnSpan="2">実行</Button>
 
+        <StackPanel>
+            <Label>ランキングExcelファイル名(.xls,.xlsx)</Label>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBox Name="FileTextBox" Margin="0,0,5,0" Padding="5"></TextBox>
+                <Button Click="FileBrowseButton_Click" Padding="10,0" Grid.Column="1">...</Button>
+            </Grid>
+            
+            <Label Margin="0,10,0,0">画像出力フォルダー</Label>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Name="OutputFolderTextBox" Margin="0,0,5,0" Padding="5"></TextBox>
+                <Button Click="FolderBrowseButton_Click" Padding="10,0" Grid.Column="1">...</Button>
+            </Grid>
+        </StackPanel>
+        
+        <Button Click="ExecButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="20,8" Grid.Row="1">実行</Button>
     </Grid>
 </Window>
