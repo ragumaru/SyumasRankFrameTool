@@ -115,7 +115,7 @@ internal class GenRankFrameImage
         { "L", ("frameLongW", SKColors.Orange) },   // 殿堂入り
     };
 
-    public static bool Gen(string outputPath, DataTable ranking)
+    public static bool Gen(string outputPath, string reverseOutputPath, DataTable ranking)
     {
         for (var i = 1; i < ranking.Rows.Count; i++)
         {
@@ -137,10 +137,8 @@ internal class GenRankFrameImage
             canvas.DrawBitmap(bitmap, 0, 30);
 
             // 順位
-            var rankWidth = DrawRank(canvas, frameInfo.color, data.Rank);
-
-            // 動画名
-            DrawTitle(canvas, rankWidth + 20, data.VideoTitle);
+            var isLongrun = data.RankDiffMark == "L" ? true : false;
+            var rankWidth = DrawRank(canvas, frameInfo.color, isLongrun, data.Rank);
 
             // ポイント等
             DrawPoints(canvas, rankWidth + 20, $"{data.Pts}pts 登録:{data.Mylist} 再生:{data.Play}");
@@ -154,16 +152,8 @@ internal class GenRankFrameImage
             // 連続
             DrawCont(canvas, bitmap.Width - 10, data.LongInfo);
 
-
-
-            // 確認用枠線
-            using var paint = new SKPaint()
-            {
-                Color = SKColors.Red,
-                StrokeWidth = 1,
-                Style = SKPaintStyle.Stroke,
-            };
-            //canvas.DrawRect(0, 0, canvas.LocalClipBounds.Width - 3, canvas.LocalClipBounds.Height - 3, paint);
+            // 動画タイトル（長すぎて幅のスケールを変える場合、以後のcanvas操作に影響を与えるため最後に描画する）
+            DrawTitle(canvas, rankWidth + 20, bitmap.Width, data.VideoTitle);
 
             canvas.Flush();
 
@@ -178,7 +168,7 @@ internal class GenRankFrameImage
         return true;
     }
 
-    private static float DrawRank(SKCanvas canvas, SKColor color, string text)
+    private static float DrawRank(SKCanvas canvas, SKColor color, bool isLongrun, string text)
     {
         var point = new SKPoint(10, 90);
 
@@ -189,6 +179,16 @@ internal class GenRankFrameImage
             TextSize = 65,
             IsAntialias = true,
         };
+
+        // 長期作品（殿堂入り）の場合、描画内容を書き換え
+        if (isLongrun)
+        {
+            text = "★";
+            point.Y = 70;
+            paint.Color = SKColors.Orange;
+            paint.Typeface = SKTypeface.FromFile(GenMain.AzukiFontPath);
+            paint.TextSize = 35;
+        }
 
         // 影
         paint.ImageFilter = SKImageFilter.CreateBlur(3, 3);
@@ -213,7 +213,13 @@ internal class GenRankFrameImage
         return paint.MeasureText(text);
     }
 
-    private static void DrawTitle(SKCanvas canvas, float x, string text)
+    /// <summary>
+    /// 動画タイトルの描画
+    /// </summary>
+    /// <param name="canvas"></param>
+    /// <param name="x"></param>
+    /// <param name="text"></param>
+    private static void DrawTitle(SKCanvas canvas, float x, int width, string text)
     {
         var point = new SKPoint(x, 58);
 
@@ -226,6 +232,21 @@ internal class GenRankFrameImage
             //StrokeWidth = 2,
             IsStroke = true,
         };
+
+        // テキストの幅を取得
+        var titleWidth = paint.MeasureText(text);
+        var titleRightX = x + titleWidth + 5;
+
+        Debug.WriteLine($"{text} width:{titleWidth}  rightX:{titleRightX}  waku:{width}");
+
+        if (titleRightX > width)
+        {
+            var sx = (width - x) / (titleWidth + 10);
+            point.X = point.X * (1 / sx) - 5;
+
+            Debug.WriteLine($"枠を超えました sx:{sx}");
+            canvas.Scale(sx, 1);
+        }
 
         canvas.DrawText(text, point, paint);
     }

@@ -50,7 +50,11 @@ internal class GenMain
                 {
                     var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
                     Directory.CreateDirectory(rankingOutputPath);
-                    GenRankFrameImage.Gen(rankingOutputPath, result.Tables[XlShRanking]!);
+
+                    var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
+                    Directory.CreateDirectory(rankingReversePath);
+
+                    GenRankFrameImage.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!);
                 }
             }
         });
