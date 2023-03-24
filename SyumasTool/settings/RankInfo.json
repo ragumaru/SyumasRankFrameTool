@@ -1,0 +1,45 @@
+﻿{
+  "frameBases": [
+    {
+      "mark": "U",
+      "textColor": "Red",
+      "normalfile": "frameUpW.png",
+      "reverseFile": "frameUpWU.png"
+    },
+    {
+      "mark": "D",
+      "textColor": "Blue",
+      "normalfile": "frameUpW.png",
+      "reverseFile": "frameUpWU.png"
+    },
+    {
+      "mark": "N",
+      "textColor": "Green",
+      "normalfile": "frameNewW.png",
+      "reverseFile": "frameNewWU.png"
+    }
+  ],
+  "rankInfos": {
+    "rank": {
+      "posX": 10,
+      "posY": 90,
+      "revPosY": 60,
+      "textStyle": {
+        "font": "Meiryo UI",
+        "textSize": 65,
+        "strokeWidth": 3
+      }
+    },
+    "points": {
+      "offsetX": 20,
+      "posY": 90,
+      "revPosY": 60,
+      "textStyle": {
+        "font": "Azuki",
+        "textColor": "Black",
+        "textSize": 18,
+        "strokeWidth": 1.2
+      }
+    }
+  }
+}

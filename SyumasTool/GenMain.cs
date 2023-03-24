@@ -12,15 +12,13 @@ internal class GenMain
 {
     static readonly string XlShRanking = "ranking";
 
-    public static readonly string AzukiFontPath = Path.Combine(Utils.BaseDir, @"_fonts\azuki.ttf");
-
     public static async Task<bool> MainProc(string excelFilePath, string outputFolder)
     {
         // あずきフォントがあるかどうか
-        if (!File.Exists(AzukiFontPath))
+        if (!File.Exists(Utils.AzukiFontPath))
         {
             throw new Exception($"あずきフォントが見つかりません。\n" +
-                $"読み込み先パス \"{AzukiFontPath}\" が存在しません。");
+                $"読み込み先パス \"{Utils.AzukiFontPath}\" が存在しません。");
         }
 
         // ExcelDataReaderのおまじない（xls形式対応）
@@ -54,7 +52,8 @@ internal class GenMain
                     var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
                     Directory.CreateDirectory(rankingReversePath);
 
-                    GenRankFrameImage.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!);
+                    var rankGen = new GenRankFrameImage();
+                    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!);
                 }
             }
         });
