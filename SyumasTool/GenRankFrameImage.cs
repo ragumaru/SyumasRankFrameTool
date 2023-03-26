@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
 using System.Windows.Media;
+using static System.Net.Mime.MediaTypeNames;
 using static SyumasTool.GenRankFrameInfo;
 
 namespace SyumasTool;
@@ -133,25 +134,35 @@ internal class GenRankFrameImage
             Errmsg = $"ranking:{i + 1}行目 タイトル:{data.VideoTitle} ";
 
             // "順位差識別"でフレーム画像を読み込み
-            using var bitmap = SKBitmap.Decode(GetFramePath(data, isRev));
+            var frameInfo = GetFrameSetting(data);
+            var frameFile = !isRev ? frameInfo.Normalfile : frameInfo.ReverseFile;
+            var framePath = Path.Combine(Utils.FrameImagePath, frameFile);
 
+            using var bitmap = SKBitmap.Decode(framePath);
             using var surface = SKSurface.Create(new SKImageInfo(bitmap.Width, bitmap.Height + 30));
             var canvas = surface.Canvas;
 
             canvas.DrawBitmap(bitmap, 0, !isRev ? 30 : 0);  // 設定にかく？
 
             // 順位
-            var isLongrun = data.RankDiffMark == "L" ? true : false;
-            var rankWidth = DrawRank(canvas, isLongrun, data.Rank, isRev);
+            float rankWidth;
+            if (data.RankDiffMark != "L")
+            {
+                rankWidth = DrawRank(canvas, frameInfo, data, isRev);
+            }
+            else
+            {
+                rankWidth = DrawLongrun(canvas, isRev);
+            }
+
+            // 順位変動
+            DrawRankChange(canvas, frameInfo.TextColor, data.RankDiff, isRev);
 
             // ポイント等
-            DrawPoints(canvas, rankWidth + 20, $"{data.Pts}pts 登録:{data.Mylist} 再生:{data.Play}");
+            DrawPoints(canvas, rankWidth, $"{data.Pts}pts 登録:{data.Mylist} 再生:{data.Play:#,0}", isRev);
 
             // 投稿者等
             DrawAuthor(canvas, bitmap.Width - 55, $"{data.Author} {data.VideoID} [{data.PostDate:d}]");
-
-            // 順位変動
-            //DrawRankChange(canvas, frameInfo.color, data.RankDiff);
 
             // 連続
             DrawCont(canvas, bitmap.Width - 10, data.LongInfo);
@@ -173,52 +184,41 @@ internal class GenRankFrameImage
     }
 
     /// <summary>
-    /// 順位差識別を設定ファイルから探し、フレームのファイル名を返します。
+    /// 設定ファイルから順位差識別の設定を返します。
     /// </summary>
-    string GetFramePath(RankingRowData data, bool isRev)
+    FrameBase GetFrameSetting(RankingRowData data)
     {
         try
         {
-            var frameInfo = Settings.FrameBases.Single(n => n.Mark == data.RankDiffMark);
-            var frameFile = !isRev ? frameInfo.Normalfile : frameInfo.ReverseFile;
-
-            return Path.Combine(Utils.FrameImagePath, frameFile);
+            return Settings.FrameBases.Single(n => n.Mark == data.RankDiffMark);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
             throw new Exception($"{Errmsg} 順位差識別:{data.RankDiffMark} この順位差識別は設定ファイルに定義されていません。");
         }
         catch (Exception ex)
         {
-            throw new Exception($"{Errmsg} 順位差識別の処理中に予期せぬエラーが発生しました。");
+            throw new Exception($"{Errmsg} 順位差識別の処理中に予期せぬエラーが発生しました。\n{ex.Message}");
         }
     }
 
     /// <summary>
     /// 順位を描画します。
     /// </summary>
-    float DrawRank(SKCanvas canvas, bool isLongrun, string text, bool isRev)
+    float DrawRank(SKCanvas canvas, FrameBase frameInfo, RankingRowData data, bool isRev)
     {
         var info = Settings.RankInfos.Rank;
         var point = new SKPoint(info.PosX, !isRev ? info.PosY : info.RevPosY);
 
         using var paint = new SKPaint
         {
-            //Color = SKColor.Parse(info.TextStyle?.TextColor ?? "Black"),
+            Color = SKColors.Black,
             Typeface = SKTypeface.FromFamilyName("Meiryo UI", SKFontStyle.BoldItalic),
-            TextSize = info.TextStyle?.TextSize ?? 65,
+            TextSize = info.TextStyle.TextSize,
             IsAntialias = true,
         };
 
-        // 長期作品（殿堂入り）の場合、描画内容を書き換え
-        if (isLongrun)
-        {
-            text = "★";
-            point.Y = 70;
-            paint.Color = SKColors.Orange;
-            paint.Typeface = SKTypeface.FromFile(Utils.AzukiFontPath);
-            paint.TextSize = 35;
-        }
+        var text = data.Rank;
 
         // 影
         paint.ImageFilter = SKImageFilter.CreateBlur(3, 3);
@@ -234,13 +234,80 @@ internal class GenRankFrameImage
         canvas.DrawText(text, point, paint);
 
         // 本体
-        paint.Color = SKColor.Parse(info.TextStyle?.TextColor ?? "Black");
+        //paint.Color = SKColor.Parse(info.TextStyle?.TextColor ?? "Black");
+        paint.Color = Utils.SKColorFromString(frameInfo.TextColor);
         paint.IsStroke = false;
         paint.Style = SKPaintStyle.Fill;
 
         canvas.DrawText(text, point, paint);
 
         return paint.MeasureText(text);
+    }
+
+    /// <summary>
+    /// 長期作品の"★"を描画します。
+    /// </summary>
+    float DrawLongrun(SKCanvas canvas, bool isRev)
+    {
+        var info = Settings.RankInfos.RankLongrun;
+        var point = new SKPoint(info.PosX, !isRev ? info.PosY : info.RevPosY);
+        var text = "★";
+
+        using var paint = new SKPaint
+        {
+            Color = Utils.SKColorFromString(info.TextStyle.TextColor),
+            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            TextSize = info.TextStyle.TextSize,
+            IsAntialias = true,
+        };
+
+        canvas.DrawText(text, point, paint);
+
+        return paint.MeasureText(text);
+    }
+
+    /// <summary>
+    /// 順位変動を描画します。
+    /// </summary>
+    void DrawRankChange(SKCanvas canvas, string colorText, string text, bool isRev)
+    {
+        var info = Settings.RankInfos.RankChange;
+        var point = new SKPoint(info.PosX, !isRev ? info.PosY : info.RevPosY);
+
+        using var paint = new SKPaint()
+        {
+            Color = SKColors.White,
+            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            IsAntialias = true,
+            IsStroke = true,
+            StrokeWidth = 3,
+            TextSize = info.TextStyle.TextSize,
+        };
+
+        canvas.DrawText(text, point, paint);
+
+        paint.Color = Utils.SKColorFromString(colorText);
+        paint.IsStroke = false;
+        paint.Style = SKPaintStyle.Fill;
+
+        canvas.DrawText(text, point, paint);
+    }
+
+    void DrawPoints(SKCanvas canvas, float rankWidth, string text, bool isRev)
+    {
+        var info = Settings.RankInfos.Points;
+        var point = new SKPoint(rankWidth + info.OffsetX, !isRev ? info.PosY : info.RevPosY);
+
+        using var paint = new SKPaint()
+        {
+            Color = Utils.SKColorFromString(info.TextStyle.TextColor),
+            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            IsAntialias = true,
+            TextSize = info.TextStyle.TextSize,
+            StrokeWidth = info.TextStyle.StrokeWidth,
+        };
+
+        canvas.DrawText(text, point, paint);
     }
 
     /// <summary>
@@ -256,7 +323,7 @@ internal class GenRankFrameImage
         using var paint = new SKPaint()
         {
             Color = SKColors.Black,
-            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            Typeface = SKTypeface.FromFile(Utils.AzukiPFontPath),
             IsAntialias = true,
             TextSize = 22,
             //StrokeWidth = 2,
@@ -281,22 +348,6 @@ internal class GenRankFrameImage
         canvas.DrawText(text, point, paint);
     }
 
-    private static void DrawPoints(SKCanvas canvas, float x, string text)
-    {
-        var point = new SKPoint(x, 80);
-
-        using var paint = new SKPaint()
-        {
-            Color = SKColors.Black,
-            //Typeface = SKTypeface.FromFile(GenMain.AzukiFontPath),
-            IsAntialias = true,
-            TextSize = 18,
-            StrokeWidth = 1.2f,
-        };
-
-        canvas.DrawText(text, point, paint);
-    }
-
     private static void DrawAuthor(SKCanvas canvas, float x, string text)
     {
         var point = new SKPoint(x, 100);
@@ -304,34 +355,11 @@ internal class GenRankFrameImage
         using var paint = new SKPaint()
         {
             Color = SKColors.Black,
-            //Typeface = SKTypeface.FromFile(GenMain.AzukiFontPath),
+            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
             IsAntialias = true,
             TextSize = 18,
             TextAlign = SKTextAlign.Right,
         };
-
-        canvas.DrawText(text, point, paint);
-    }
-
-    private static void DrawRankChange(SKCanvas canvas, SKColor color, string text)
-    {
-        var point = new SKPoint(5, 28);
-
-        using var paint = new SKPaint()
-        {
-            Color = SKColors.White,
-            //Typeface = SKTypeface.FromFile(GenMain.AzukiFontPath),
-            IsAntialias = true,
-            IsStroke = true,
-            StrokeWidth = 3,
-            TextSize = 28,
-        };
-
-        canvas.DrawText(text, point, paint);
-
-        paint.Color = color;
-        paint.IsStroke = false;
-        paint.Style = SKPaintStyle.Fill;
 
         canvas.DrawText(text, point, paint);
     }
@@ -350,7 +378,7 @@ internal class GenRankFrameImage
         using var paint = new SKPaint()
         {
             Color = SKColors.White,
-            //Typeface = SKTypeface.FromFile(GenMain.AzukiFontPath),
+            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
             IsAntialias = true,
             StrokeWidth = 7,
             IsStroke = true,

@@ -9,14 +9,38 @@
     {
       "mark": "D",
       "textColor": "Blue",
-      "normalfile": "frameUpW.png",
-      "reverseFile": "frameUpWU.png"
+      "normalfile": "frameDownW.png",
+      "reverseFile": "frameDownWU.png"
     },
     {
       "mark": "N",
       "textColor": "Green",
       "normalfile": "frameNewW.png",
       "reverseFile": "frameNewWU.png"
+    },
+    {
+      "mark": "H",
+      "textColor": "Red",
+      "normalfile": "frameUpW.png",
+      "reverseFile": "frameUpWU.png"
+    },
+    {
+      "mark": "K",
+      "textColor": "Red",
+      "normalfile": "frameKeepW.png",
+      "reverseFile": "frameKeepWU.png"
+    },
+    {
+      "mark": "S",
+      "textColor": "Red",
+      "normalfile": "frameUpW.png",
+      "reverseFile": "frameUpWU.png"
+    },
+    {
+      "mark": "L",
+      "textColor": "Orange",
+      "normalfile": "frameLongW.png",
+      "reverseFile": "frameLongWU.png"
     }
   ],
   "rankInfos": {
@@ -30,12 +54,31 @@
         "strokeWidth": 3
       }
     },
-    "points": {
-      "offsetX": 20,
-      "posY": 90,
-      "revPosY": 60,
+    "rankLongrun": {
+      "posX": 10,
+      "posY": 70,
+      "revPosY": 40,
       "textStyle": {
         "font": "Azuki",
+        "textColor": "Orange",
+        "textSize": 35
+      }
+    },
+    "rankChange": {
+      "posX": 5,
+      "posY": 28,
+      "revPosY": 78,
+      "textStyle": {
+        "font": "Azuki",
+        "textSize": 28
+      }
+    },
+    "points": {
+      "offsetX": 20,
+      "posY": 80,
+      "revPosY": 50,
+      "textStyle": {
+        "font": "AzukiP",
         "textColor": "Black",
         "textSize": 18,
         "strokeWidth": 1.2

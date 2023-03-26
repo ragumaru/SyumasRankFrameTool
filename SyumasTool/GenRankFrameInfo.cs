@@ -23,6 +23,8 @@ internal class GenRankFrameInfo
     {
         public required DrawInfo Rank { get; set; }
         public required DrawInfo Points { get; set; }
+        public required DrawInfo RankLongrun { get; set; }
+        public required DrawInfo RankChange { get; set; }
     }
 
     public record DrawInfo
@@ -31,15 +33,15 @@ internal class GenRankFrameInfo
         public int OffsetX { get; set; }
         public int PosY { get; set; }
         public int RevPosY { get; set; }
-        public TextStyle? TextStyle { get; set; }
+        public required TextStyle TextStyle { get; set; }
     }
 
     public record TextStyle
     {
         public string? Font { get; set; }
         public string? TextColor { get; set; }
-        public int? TextSize { get; set; }
-        public double? StrokeWidth { get; set; }
+        public int TextSize { get; set; }
+        public float StrokeWidth { get; set; }
     }
 
 
