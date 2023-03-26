@@ -326,7 +326,7 @@ internal class GenRankFrameImage
             Typeface = SKTypeface.FromFile(Utils.AzukiPFontPath),
             IsAntialias = true,
             TextSize = 22,
-            //StrokeWidth = 2,
+            StrokeWidth = 1.4f,
             IsStroke = true,
         };
 
