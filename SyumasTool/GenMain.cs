@@ -12,7 +12,7 @@ internal class GenMain
 {
     static readonly string XlShRanking = "ranking";
 
-    public static async Task<bool> MainProc(string excelFilePath, string outputFolder)
+    public static async Task<bool> MainProc(string excelFilePath, string outputFolder, IProgress<int> progress)
     {
         // あずきフォントがあるかどうか
         if (!File.Exists(Utils.AzukiFontPath))
@@ -53,11 +53,12 @@ internal class GenMain
                     Directory.CreateDirectory(rankingReversePath);
 
                     var rankGen = new GenRankFrameImage();
-                    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!);
+                    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
                 }
             }
         });
 
+        progress.Report(100);
         return true;
     }
 }

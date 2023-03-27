@@ -35,7 +35,16 @@
                 <Button Click="FolderBrowseButton_Click" Padding="10,0" Grid.Column="1">...</Button>
             </Grid>
         </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ProgressBar Name="Progress" Margin="0,10,10,10" Visibility="Hidden"/>
+            <Button Click="ExecButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="20,8" Grid.Column="1">実行</Button>
+        </Grid>
         
-        <Button Click="ExecButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="20,8" Grid.Row="1">実行</Button>
     </Grid>
 </Window>

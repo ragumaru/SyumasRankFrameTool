@@ -19,11 +19,8 @@ public partial class MainWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        //FileTextBox.Text = ConfigurationManager.AppSettings["ExcelFilePath"];
-        //OutputFolderTextBox.Text = ConfigurationManager.AppSettings["OutputFolder"];
         FileTextBox.Text = Properties.Settings.Default["ExcelFilePath"].ToString();
         OutputFolderTextBox.Text = Properties.Settings.Default["OutputFolder"].ToString();
-
     }
 
     private void FileBrowseButton_Click(object sender, RoutedEventArgs e)
@@ -73,16 +70,16 @@ public partial class MainWindow : Window
         {
             Mouse.OverrideCursor = Cursors.Wait;
             IsEnabled = false;
+            Progress.Value = 0;
+            Progress.Visibility = Visibility.Visible;
 
-            //Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            //config.AppSettings.Settings["ExcelFilePath"].Value = FileTextBox.Text;
-            //config.AppSettings.Settings["OutputFolder"].Value = OutputFolderTextBox.Text;
-            //config.Save();
             Properties.Settings.Default["ExcelFilePath"] = FileTextBox.Text;
             Properties.Settings.Default["OutputFolder"] = OutputFolderTextBox.Text;
             Properties.Settings.Default.Save();
 
-            var res = await GenMain.MainProc(FileTextBox.Text, OutputFolderTextBox.Text);
+            var p = new Progress<int>(ShowProgress);
+
+            var res = await GenMain.MainProc(FileTextBox.Text, OutputFolderTextBox.Text, p);
 
             MessageBox.Show($"完了しました!\n");
         }
@@ -95,6 +92,12 @@ public partial class MainWindow : Window
         {
             Mouse.OverrideCursor = null;
             this.IsEnabled = true;
+            Progress.Visibility = Visibility.Hidden;
         }
+    }
+
+    public void ShowProgress(int v)
+    {
+        Progress.Value = v;
     }
 }

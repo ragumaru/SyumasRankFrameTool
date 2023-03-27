@@ -1,19 +1,7 @@
-﻿using ExcelDataReader;
-using SkiaSharp;
-using System;
-using System.Collections.Generic;
+﻿using SkiaSharp;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Ink;
-using System.Windows.Media;
-using static System.Net.Mime.MediaTypeNames;
-using static SyumasTool.GenRankFrameInfo;
 
 namespace SyumasTool;
 
@@ -79,12 +67,13 @@ class GenRankFrameImage
     };
 
     string Errmsg { get; set; } = "";
+    SKTypeface AzukiFont { get; } = SKTypeface.FromFile(Utils.AzukiFontPath);
     //RankingSettings Settings { get; init; } = GenRankFrameInfo.ReadInfo();
 
-    public bool Gen(string outputPath, string reverseOutputPath, DataTable ranking)
+    public bool Gen(string outputPath, string reverseOutputPath, DataTable ranking, IProgress<int> progress)
     {
         // よく使うあずきフォントはここで定義
-        using (var azukiFont = SKTypeface.FromFile(Utils.AzukiFontPath)) ;
+        //AzukiFont = SKTypeface.FromFile(Utils.AzukiFontPath);
 
         // 画像生成処理
         for (var i = 1; i < ranking.Rows.Count; i++)
@@ -126,7 +115,7 @@ class GenRankFrameImage
                 }
 
                 // 順位変動
-                var rcPoint = new SKPoint(5, !isRev ? 28 : 100);
+                var rcPoint = new SKPoint(5, !isRev ? 28 : 102);
                 DrawRankChange(canvas, frameInfo.color, rcPoint, data.RankDiff);
 
                 // ポイント等
@@ -138,7 +127,7 @@ class GenRankFrameImage
                 DrawText(canvas, aPoint, SKColors.Black, 18, $"{data.Author} {data.VideoID} [{data.PostDate:d}]", SKTextAlign.Right);
 
                 // 連続
-                var cPoint = new SKPoint(bitmap.Width - 10, !isRev ? 25 : 100);
+                var cPoint = new SKPoint(bitmap.Width - 10, !isRev ? 25 : 102);
                 DrawCont(canvas, cPoint, data.LongInfo);
 
                 // 動画タイトル（長すぎて幅のスケールを変える場合、以後のcanvas操作に影響を与えるため最後に描画する）
@@ -154,6 +143,8 @@ class GenRankFrameImage
                     surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
                 }
             }
+
+            progress.Report((int)i * 100 / ranking.Rows.Count);
         }
 
         return true;
@@ -195,28 +186,6 @@ class GenRankFrameImage
     }
 
     /// <summary>
-    /// 長期作品の"★"を描画します。
-    /// </summary>
-    //float DrawLongrun(SKCanvas canvas, bool isRev)
-    //{
-    //    var info = Settings.RankInfos.RankLongrun;
-    //    var point = new SKPoint(info.PosX, !isRev ? info.PosY : info.RevPosY);
-    //    var text = "★";
-
-    //    using var paint = new SKPaint
-    //    {
-    //        Color = Utils.SKColorFromString(info.TextStyle.TextColor),
-    //        Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
-    //        TextSize = info.TextStyle.TextSize,
-    //        IsAntialias = true,
-    //    };
-
-    //    canvas.DrawText(text, point, paint);
-
-    //    return paint.MeasureText(text);
-    //}
-
-    /// <summary>
     /// 順位変動を描画します。
     /// </summary>
     void DrawRankChange(SKCanvas canvas, SKColor color, SKPoint point, string text)
@@ -225,7 +194,7 @@ class GenRankFrameImage
         using var paint = new SKPaint()
         {
             Color = SKColors.White,
-            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            Typeface = AzukiFont,
             IsAntialias = true,
             IsStroke = true,
             StrokeWidth = 3,
@@ -241,23 +210,6 @@ class GenRankFrameImage
 
         canvas.DrawText(text, point, paint);
     }
-
-    //void DrawPoints(SKCanvas canvas, float rankWidth, string text, bool isRev)
-    //{
-    //    var info = Settings.RankInfos.Points;
-    //    var point = new SKPoint(rankWidth + info.OffsetX, !isRev ? info.PosY : info.RevPosY);
-
-    //    using var paint = new SKPaint()
-    //    {
-    //        Color = Utils.SKColorFromString(info.TextStyle.TextColor),
-    //        Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
-    //        IsAntialias = true,
-    //        TextSize = info.TextStyle.TextSize,
-    //        StrokeWidth = info.TextStyle.StrokeWidth,
-    //    };
-
-    //    canvas.DrawText(text, point, paint);
-    //}
 
     /// <summary>
     /// 動画タイトルの描画
@@ -293,22 +245,6 @@ class GenRankFrameImage
         canvas.DrawText(text, point, paint);
     }
 
-    //private static void DrawAuthor(SKCanvas canvas, float x, string text)
-    //{
-    //    var point = new SKPoint(x, 100);
-
-    //    using var paint = new SKPaint()
-    //    {
-    //        Color = SKColors.Black,
-    //        Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
-    //        IsAntialias = true,
-    //        TextSize = 18,
-    //        TextAlign = SKTextAlign.Right,
-    //    };
-
-    //    canvas.DrawText(text, point, paint);
-    //}
-
     /// <summary>
     /// x週連続x回目
     /// </summary>
@@ -317,7 +253,7 @@ class GenRankFrameImage
         using var paint = new SKPaint()
         {
             Color = SKColors.White,
-            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            Typeface = AzukiFont,
             IsAntialias = true,
             StrokeWidth = 7,
             IsStroke = true,
@@ -330,12 +266,15 @@ class GenRankFrameImage
 
         paint.Color = SKColors.Black;
         paint.StrokeWidth = 1.1f;
-        paint.Style = SKPaintStyle.Fill;
+        paint.Style = SKPaintStyle.StrokeAndFill;
         paint.ImageFilter = null;
 
         canvas.DrawText(text, point, paint);
     }
 
+    /// <summary>
+    /// 共通文字描画処理
+    /// </summary>
     float DrawText(
         SKCanvas canvas,
         SKPoint point,
@@ -347,7 +286,7 @@ class GenRankFrameImage
         using var paint = new SKPaint
         {
             Color = color,
-            Typeface = SKTypeface.FromFile(Utils.AzukiFontPath),
+            Typeface = AzukiFont,
             TextSize = textSize,
             TextAlign = textAlign,
             IsAntialias = true,
