@@ -19,8 +19,11 @@ public partial class MainWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        FileTextBox.Text = ConfigurationManager.AppSettings["ExcelFilePath"];
-        OutputFolderTextBox.Text = ConfigurationManager.AppSettings["OutputFolder"];
+        //FileTextBox.Text = ConfigurationManager.AppSettings["ExcelFilePath"];
+        //OutputFolderTextBox.Text = ConfigurationManager.AppSettings["OutputFolder"];
+        FileTextBox.Text = Properties.Settings.Default["ExcelFilePath"].ToString();
+        OutputFolderTextBox.Text = Properties.Settings.Default["OutputFolder"].ToString();
+
     }
 
     private void FileBrowseButton_Click(object sender, RoutedEventArgs e)
@@ -71,10 +74,13 @@ public partial class MainWindow : Window
             Mouse.OverrideCursor = Cursors.Wait;
             IsEnabled = false;
 
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            config.AppSettings.Settings["ExcelFilePath"].Value = FileTextBox.Text;
-            config.AppSettings.Settings["OutputFolder"].Value = OutputFolderTextBox.Text;
-            config.Save();
+            //Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            //config.AppSettings.Settings["ExcelFilePath"].Value = FileTextBox.Text;
+            //config.AppSettings.Settings["OutputFolder"].Value = OutputFolderTextBox.Text;
+            //config.Save();
+            Properties.Settings.Default["ExcelFilePath"] = FileTextBox.Text;
+            Properties.Settings.Default["OutputFolder"] = OutputFolderTextBox.Text;
+            Properties.Settings.Default.Save();
 
             var res = await GenMain.MainProc(FileTextBox.Text, OutputFolderTextBox.Text);
 
