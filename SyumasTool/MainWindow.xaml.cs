@@ -2,6 +2,7 @@
 using Ookii.Dialogs.Wpf;
 using System.Configuration;
 using System.IO;
+using System.Runtime.Intrinsics.X86;
 using System.Windows;
 using System.Windows.Input;
 
@@ -12,15 +13,19 @@ namespace SyumasTool;
 /// </summary>
 public partial class MainWindow : Window
 {
+    MainWindowViewModel vm;
+
     public MainWindow()
     {
         InitializeComponent();
+
+        vm = (MainWindowViewModel)DataContext;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        FileTextBox.Text = Properties.Settings.Default["ExcelFilePath"].ToString();
-        OutputFolderTextBox.Text = Properties.Settings.Default["OutputFolder"].ToString();
+        vm.ExcelFile = Properties.Settings.Default["ExcelFilePath"].ToString() ?? "";
+        vm.OutputFolder = Properties.Settings.Default["OutputFolder"].ToString() ?? "";
     }
 
     private void FileBrowseButton_Click(object sender, RoutedEventArgs e)
@@ -33,7 +38,7 @@ public partial class MainWindow : Window
 
         if (fileDialog.ShowDialog() == true)
         {
-            FileTextBox.Text = fileDialog.FileName;
+            vm.ExcelFile = fileDialog.FileName;
         }
     }
 
@@ -42,25 +47,25 @@ public partial class MainWindow : Window
         var folderDialog = new VistaFolderBrowserDialog();
         if (folderDialog.ShowDialog() == true)
         {
-            OutputFolderTextBox.Text = folderDialog.SelectedPath;
+            vm.OutputFolder = folderDialog.SelectedPath;
         }
     }
 
     private async void ExecButton_Click(object sender, RoutedEventArgs e)
     {
-        if (String.IsNullOrEmpty(FileTextBox.Text))
+        if (String.IsNullOrEmpty(vm.ExcelFile))
         {
             MessageBox.Show("ランキングExcelファイルが入力されていません。");
             return;
         }
 
-        if (!File.Exists(FileTextBox.Text))
+        if (!File.Exists(vm.ExcelFile))
         {
             MessageBox.Show("ランキングExcelファイルが存在しません。");
             return;
         }
 
-        if (!Directory.Exists(OutputFolderTextBox.Text))
+        if (!Directory.Exists(vm.OutputFolder))
         {
             MessageBox.Show("画像出力フォルダが存在しません。");
             return;
@@ -73,13 +78,13 @@ public partial class MainWindow : Window
             Progress.Value = 0;
             Progress.Visibility = Visibility.Visible;
 
-            Properties.Settings.Default["ExcelFilePath"] = FileTextBox.Text;
-            Properties.Settings.Default["OutputFolder"] = OutputFolderTextBox.Text;
+            Properties.Settings.Default["ExcelFilePath"] = vm.ExcelFile;
+            Properties.Settings.Default["OutputFolder"] = vm.OutputFolder;
             Properties.Settings.Default.Save();
 
-            var p = new Progress<int>(ShowProgress);
+            var p = new Progress<int>(e => vm.ProgressValue = e);
 
-            var res = await GenMain.MainProc(FileTextBox.Text, OutputFolderTextBox.Text, p);
+            var res = await GenMain.MainProc(vm.ExcelFile, vm.OutputFolder, p);
 
             MessageBox.Show($"完了しました!\n");
         }
@@ -94,10 +99,5 @@ public partial class MainWindow : Window
             this.IsEnabled = true;
             Progress.Visibility = Visibility.Hidden;
         }
-    }
-
-    public void ShowProgress(int v)
-    {
-        Progress.Value = v;
     }
 }

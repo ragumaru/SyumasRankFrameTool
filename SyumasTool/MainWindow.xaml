@@ -6,6 +6,9 @@
         xmlns:local="clr-namespace:SyumasTool"
         mc:Ignorable="d"
         Title="週マスランキング フレーム作成ツール" Height="230" Width="500" Loaded="Window_Loaded">
+    <Window.DataContext>
+        <local:MainWindowViewModel/>
+    </Window.DataContext>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -20,7 +23,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBox Name="FileTextBox" Margin="0,0,5,0" Padding="5"></TextBox>
+                <TextBox Text="{Binding ExcelFile}" Margin="0,0,5,0" Padding="5"></TextBox>
                 <Button Click="FileBrowseButton_Click" Padding="10,0" Grid.Column="1">...</Button>
             </Grid>
             
@@ -31,7 +34,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBox Name="OutputFolderTextBox" Margin="0,0,5,0" Padding="5"></TextBox>
+                <TextBox Text="{Binding OutputFolder}" Margin="0,0,5,0" Padding="5"></TextBox>
                 <Button Click="FolderBrowseButton_Click" Padding="10,0" Grid.Column="1">...</Button>
             </Grid>
         </StackPanel>
@@ -42,7 +45,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <ProgressBar Name="Progress" Margin="0,10,10,10" Visibility="Hidden"/>
+            <ProgressBar Name="Progress" Value="{Binding ProgressValue}" Margin="0,10,10,10" Visibility="Hidden"/>
             <Button Click="ExecButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="20,8" Grid.Column="1">実行</Button>
         </Grid>
         
