@@ -12,6 +12,7 @@ namespace SyumasTool;
 internal class GenMain
 {
     static readonly string XlShRanking = "ranking";
+    static readonly string XlShJogai = "jogai";
 
     public static async Task<bool> MainProc(string excelFilePath, string outputFolder, IProgress<int> progress)
     {
@@ -45,16 +46,26 @@ internal class GenMain
                 var result = reader.AsDataSet();
 
                 // ランキングフレーム生成
-                if (result.Tables.Contains(XlShRanking))
+                //if (result.Tables.Contains(XlShRanking))
+                //{
+                //    var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
+                //    Directory.CreateDirectory(rankingOutputPath);
+
+                //    var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
+                //    Directory.CreateDirectory(rankingReversePath);
+
+                //    var rankGen = new GenRankFrameImage();
+                //    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
+                //}
+
+                // 除外画像生成
+                if (result.Tables.Contains(XlShJogai))
                 {
-                    var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
-                    Directory.CreateDirectory(rankingOutputPath);
+                    var jogaiOutputPath = Path.Combine(outputPath, XlShJogai);
+                    Directory.CreateDirectory(jogaiOutputPath);
 
-                    var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
-                    Directory.CreateDirectory(rankingReversePath);
-
-                    var rankGen = new GenRankFrameImage();
-                    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
+                    var genJogai = new GenJogaiImage();
+                    genJogai.Gen(jogaiOutputPath, result.Tables[XlShJogai]!, progress);
                 }
             }
         });

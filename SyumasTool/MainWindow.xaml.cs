@@ -28,29 +28,6 @@ public partial class MainWindow : Window
         vm.OutputFolder = Properties.Settings.Default["OutputFolder"].ToString() ?? "";
     }
 
-    private void FileBrowseButton_Click(object sender, RoutedEventArgs e)
-    {
-        var fileDialog = new OpenFileDialog()
-        {
-            Title = "ランキングExcelファイルを指定",
-            Filter = "Excelファイル(*.xls, *.xlsx)|*.xls;*.xlsx",
-        };
-
-        if (fileDialog.ShowDialog() == true)
-        {
-            vm.ExcelFile = fileDialog.FileName;
-        }
-    }
-
-    private void FolderBrowseButton_Click(object sender, RoutedEventArgs e)
-    {
-        var folderDialog = new VistaFolderBrowserDialog();
-        if (folderDialog.ShowDialog() == true)
-        {
-            vm.OutputFolder = folderDialog.SelectedPath;
-        }
-    }
-
     private async void ExecButton_Click(object sender, RoutedEventArgs e)
     {
         if (String.IsNullOrEmpty(vm.ExcelFile))

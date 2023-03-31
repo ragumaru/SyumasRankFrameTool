@@ -6,6 +6,10 @@ namespace SyumasTool;
 
 internal static class Utils
 {
+    internal const int ImageHeight = 360;
+    internal const int ImageWidth = 640;
+
+
     /// <summary>
     /// このアプリが走っているパスを返します。
     /// </summary>
@@ -30,5 +34,19 @@ internal static class Utils
         if (field == null) return SKColors.Black;
         var v = field.GetValue(null) ?? SKColors.Black;
         return (SKColor)v;
+    }
+
+    /// <summary>
+    /// 日付形式の文字列を"[yyyy/mm/dd]"形式に変換して返します。
+    /// 変換できないときは空文字となります。
+    /// </summary>
+    public static string StringDateFormat(string stringDate)
+    {
+        if (!DateTime.TryParse(stringDate, out var date))
+        {
+            return string.Empty;
+        }
+
+        return date.ToString("[yyyy/MM/dd]");
     }
 }
