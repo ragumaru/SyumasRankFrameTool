@@ -28,10 +28,11 @@ internal class GenMain
 
         await Task.Run(() =>
         {
-
-            using (var stream = File.Open(excelFilePath, FileMode.Open, FileAccess.Read))
-            using (var reader = ExcelReaderFactory.CreateReader(stream))
+            try
             {
+                using var stream = File.Open(excelFilePath, FileMode.Open, FileAccess.Read);
+                using var reader = ExcelReaderFactory.CreateReader(stream);
+
                 // 出力先フォルダー作成
                 var outputPath = Path.Combine(outputFolder, $"frame{DateTime.Now.ToString("yyyyMMdd_HHmmss")}");
 
@@ -46,17 +47,17 @@ internal class GenMain
                 var result = reader.AsDataSet();
 
                 // ランキングフレーム生成
-                //if (result.Tables.Contains(XlShRanking))
-                //{
-                //    var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
-                //    Directory.CreateDirectory(rankingOutputPath);
+                if (result.Tables.Contains(XlShRanking))
+                {
+                    var rankingOutputPath = Path.Combine(outputPath, XlShRanking);
+                    Directory.CreateDirectory(rankingOutputPath);
 
-                //    var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
-                //    Directory.CreateDirectory(rankingReversePath);
+                    var rankingReversePath = Path.Combine(rankingOutputPath, "reverse");
+                    Directory.CreateDirectory(rankingReversePath);
 
-                //    var rankGen = new GenRankFrameImage();
-                //    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
-                //}
+                    var rankGen = new GenRankFrameImage();
+                    //rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
+                }
 
                 // 除外画像生成
                 if (result.Tables.Contains(XlShJogai))
@@ -67,6 +68,11 @@ internal class GenMain
                     var genJogai = new GenJogaiImage();
                     genJogai.Gen(jogaiOutputPath, result.Tables[XlShJogai]!, progress);
                 }
+            }
+            catch (IOException)
+            {
+                // 分かりやすいエラーにして返す
+                throw new Exception("指定したExcelファイルが既に開かれている可能性があります。\n閉じてから再度実行して下さい。");
             }
         });
 

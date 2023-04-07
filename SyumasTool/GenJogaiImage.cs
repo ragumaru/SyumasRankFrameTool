@@ -1,17 +1,7 @@
 ﻿using SkiaSharp;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.TextFormatting;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SyumasTool;
 
@@ -43,8 +33,9 @@ internal class GenJogaiImage
         internal string VideoID => Row[6].ToString() ?? "";
 
         /// <summary>投稿日</summary>
-        internal DateTime PostDate => (DateTime)Row[7];
+        internal DateTime? PostDate => Utils.GetExcelDateTime(Row[7].ToString());
 
+        internal string FormattedPostDate => PostDate?.ToString("[yyyy/MM/dd]") ?? "(不明な日付)";
 
         internal JogaiRowData(DataRow row)
         {
@@ -52,22 +43,67 @@ internal class GenJogaiImage
         }
     }
 
+    struct JogaiRow
+    {
+        internal int Page;
+        internal int Y;
+        internal string Reason;
+        internal string Title;
+        internal string Points;
+        internal string VideoID;
+    }
+
     SKTypeface AzukiFont { get; } = SKTypeface.FromFile(Utils.AzukiFontPath);
+    SKTypeface AzukiPFont { get; } = SKTypeface.FromFile(Utils.AzukiPFontPath);
     const int InitY = 60;
 
     internal void Gen(string outputPath, DataTable jogaiTable, IProgress<int> progress)
     {
-        var prevExclusionReason = "";
-        var page = 1;
-        var y = InitY;
-        var i = 1;
+        List<JogaiRow> jogaiList = GenList(jogaiTable);
 
+        // データを描画
+        for (var page = 1; page <= jogaiList.Max(d => d.Page); page++)
+        {
+            using var surface = SKSurface.Create(new SKImageInfo(Utils.ImageWidth, Utils.ImageHeight));
+            var canvas = surface.Canvas;
+
+            DrawHeader(canvas);
+
+            foreach (var row in jogaiList.Where(d => d.Page == page))
+            {
+                var y = row.Y;
+                if (!String.IsNullOrEmpty(row.Reason))
+                {
+                    DrawExclusionReson(canvas, y, row.Reason);
+                    y += 22;
+                }
+
+                DrawVideoTitle(canvas, y, row);
+                DrawVideoData(canvas, y + 20, row);
+            }
+
+            canvas.Flush();
+
+            string outputFile = Path.Combine(outputPath, $"jogai{page}.png");
+            using (var output = File.Create(outputFile))
+            {
+                surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
+            }
+        }
+
+
+
+
+
+        /*
         while (true)
         {
             using var surface = SKSurface.Create(new SKImageInfo(Utils.ImageWidth, Utils.ImageHeight));
             var canvas = surface.Canvas;
 
             DrawTitle(canvas);
+
+            var y = InitY;
 
             for (; i < jogaiTable.Rows.Count; i++)
             {
@@ -81,14 +117,21 @@ internal class GenJogaiImage
                 {
                     prevExclusionReason = row.ExclusionReason;
                     DrawExclusionReson(canvas, y, row.ExclusionReason);
-                    y += 20;
+                    y += 22;
                 }
 
                 // 動画データを描画
                 DrawVideoData(canvas, y, row);
-                y += 50;
+                y += 70;
 
-                break;
+                // ページ下まで到達しそうだったら改ページ
+                // TODO:次の行の除外理由がブレークするかどうかも考慮に入れる必要あり
+                if (y + 70 > Utils.ImageHeight)
+                {
+                    prevExclusionReason = "";
+                    i++;
+                    break;
+                }
             }
 
             // ここに来たら保存
@@ -100,38 +143,81 @@ internal class GenJogaiImage
                 surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
             }
 
+            page++;
+
+            // データが終わりなら抜ける
+            if (i >= jogaiTable.Rows.Count) break;
+        }
+        */
 
 
-            // 初期描画以外、除外理由がブレークまたは"*"の時、改ページ
-            break;
+
+
+    }
+
+    /// <summary>
+    /// データのページ付け
+    /// </summary>
+    List<JogaiRow> GenList(DataTable jogaiTable)
+    {
+        List<JogaiRow> jogaiList = new();
+
+        var prevExclusionReason = "";
+        var page = 1;
+        var y = InitY;
+
+        for (var i = 1; i < jogaiTable.Rows.Count; i++)
+        {
+            var row = new JogaiRowData(jogaiTable.Rows[i]);
+
+            // 改ページマーク"*"があったら改ページ
+            if (row.ExclusionReason == "*")
+            {
+                if (y != InitY) page++;
+                y = InitY;
+                prevExclusionReason = "";
+                continue;
+            }
+
+            // 新しい行の入れ物
+            var newRow = new JogaiRow()
+            {
+                Page = page,
+                Y = y,
+                Title = row.VideoTitle,
+                Points = $"{row.Points}pts　登録:{row.Mylist}　再生:{row.Play}　{row.Author}",
+                VideoID = $"{row.VideoID}  {row.FormattedPostDate}",
+            };
+
+            // 除外理由が変わったら除外理由を入れておく
+            if (prevExclusionReason != row.ExclusionReason)
+            {
+                prevExclusionReason = row.ExclusionReason;
+                newRow.Reason = row.ExclusionReason;
+                y += 22;
+            }
+
+            jogaiList.Add(newRow);
+
+            y += 70;
+            if (y + 70 > Utils.ImageHeight)
+            {
+                page++;
+                y = InitY;
+                prevExclusionReason = "";
+            }
         }
 
-
-
-
-
+        return jogaiList;
     }
 
-    void SaveImage()
-    {
-
-    }
-
-    //SKSurface CreateNewPage()
-    //{
-    //    var surface = SKSurface.Create(new SKImageInfo(bitmap.Width, bitmap.Height + 30));
-
-
-    //    return surface
-    //    }
-
-    void DrawTitle(SKCanvas canvas)
+    void DrawHeader(SKCanvas canvas)
     {
         using var paint = new SKPaint
         {
             Color = SKColors.Black,
             Typeface = AzukiFont,
-            TextSize = 20,
+            TextSize = 22,
             TextAlign = SKTextAlign.Center,
             StrokeWidth = 1.4f,
             IsStroke = true,
@@ -150,31 +236,74 @@ internal class GenJogaiImage
         {
             Color = SKColors.Red,
             Typeface = AzukiFont,
-            TextSize = 16,
+            TextSize = 20,
+            StrokeWidth = 1.2f,
+            IsStroke = true,
+            Style = SKPaintStyle.StrokeAndFill,
             IsAntialias = true,
         };
 
-        canvas.DrawText($"★{text}", 10, y, paint);
+        canvas.DrawText($"★{text}", 20, y, paint);
     }
 
-    void DrawVideoData(SKCanvas canvas, int y, JogaiRowData row)
+    /// <summary>
+    /// 動画タイトルの描画
+    /// </summary>
+    void DrawVideoTitle(SKCanvas canvas, int y, JogaiRow row)
     {
-        // タイトル
+        using var paint = new SKPaint()
+        {
+            Color = SKColors.Black,
+            Typeface = AzukiPFont,
+            TextSize = 18,
+            FakeBoldText = true,
+            IsAntialias = true,
+        };
+
+        // テキストの幅を取得
+        float x = 35;
+        var titleWidth = paint.MeasureText(row.Title);
+        var titleRightX = titleWidth + x + 15;
+
+        if (titleRightX > Utils.ImageWidth)
+        {
+            var sx = (Utils.ImageWidth - x) / (titleWidth + 10);
+            x = x * (1 / sx) - 5;
+
+            Debug.WriteLine($"枠を超えました sx:{sx}");
+            canvas.Scale(sx, 1);
+        }
+
+        canvas.DrawText(row.Title, x, y, paint);
+
+        //canvas.Scale(0);
+    }
+
+    void DrawVideoData(SKCanvas canvas, int y, JogaiRow row)
+    {
+        // 動画タイトル
         using var paint = new SKPaint
         {
             Color = SKColors.Black,
-            Typeface = AzukiFont,
-            TextSize = 14,
+            Typeface = AzukiPFont,
+            TextSize = 16,
+            FakeBoldText = true,
+            //StrokeWidth = 1.1f,
+            //IsStroke = true,
+            //Style = SKPaintStyle.StrokeAndFill,
             IsAntialias = true,
         };
 
-        canvas.DrawText(row.VideoTitle, 20, y, paint);
+        //canvas.DrawText(row.VideoTitle, 35, y, paint);
 
         // ポイント・マイリス・再生・作者
-        paint.TextSize = 12;
-        canvas.DrawText($"{row.Points}pts　登録:{row.Mylist}　再生:{row.Play}　{row.Author}", 30, y + 25, paint);
+        //canvas.DrawText($"{row.Points}pts　登録:{row.Mylist}　再生:{row.Play}　{row.Author}", 50, y + 20, paint);
+        canvas.DrawText(row.Points, 50, y, paint);
 
         // 動画ID・投稿日
-        canvas.DrawText($"{row.VideoID}  {row.PostDate:d}", 30, y + 45, paint);
+        //canvas.DrawText($"{row.VideoID}  {row.FormattedPostDate}", 50, y + 40, paint);
+        canvas.DrawText(row.VideoID, 50, y + 20, paint);
+
+        //Debug.WriteLine($"{row.VideoID}  Y:{y}  Ascent:{paint.FontMetrics.Ascent}  Top:{paint.FontMetrics.Top}  Bottom:{paint.FontMetrics.Bottom}  Descent:{paint.FontMetrics.Descent}");
     }
 }

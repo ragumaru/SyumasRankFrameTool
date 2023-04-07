@@ -6,8 +6,10 @@ namespace SyumasTool;
 
 internal static class Utils
 {
-    internal const int ImageHeight = 360;
-    internal const int ImageWidth = 640;
+    //internal const int ImageWidth = 1280; // でかすぎて余白が出まくる
+    //internal const int ImageHeight = 720; // Ver3までは512*384(4:3) ワイドフレームの横640で16:9にすると640x360になり、縦が小さくなっちゃう
+    internal const int ImageWidth = 864;
+    internal const int ImageHeight = 486;
 
 
     /// <summary>
@@ -48,5 +50,30 @@ internal static class Utils
         }
 
         return date.ToString("[yyyy/MM/dd]");
+    }
+
+    /// <summary>
+    /// Excelの日付形式のセルからDateTime形式でデータを取り出します。
+    /// </summary>
+    public static DateTime? GetExcelDateTime(string? s)
+    {
+        // Nullならそのまま返す
+        if (s == null) return null;
+
+        // おとなしくDateTime型に変換できれば変換して返す
+        if (DateTime.TryParse(s, out var d)) return d;
+
+        // シリアル値っぽかったらDoubleに変換する。ダメだったらNullで返す
+        if (!Double.TryParse(s, out var r)) return null;
+
+        // シリアル値からDateTimeに変換する、Exceptionが発生したらNullで返す
+        try
+        {
+            return DateTime.FromOADate(r);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
