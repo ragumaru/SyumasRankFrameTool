@@ -90,69 +90,6 @@ internal class GenJogaiImage
                 surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
             }
         }
-
-
-
-
-
-        /*
-        while (true)
-        {
-            using var surface = SKSurface.Create(new SKImageInfo(Utils.ImageWidth, Utils.ImageHeight));
-            var canvas = surface.Canvas;
-
-            DrawTitle(canvas);
-
-            var y = InitY;
-
-            for (; i < jogaiTable.Rows.Count; i++)
-            {
-                var row = new JogaiRowData(jogaiTable.Rows[i]);
-
-                // 除外理由が"*"の場合は改ページ
-                if (row.ExclusionReason == "*") break;
-
-                // 除外理由が変わった時は除外理由を描画
-                if (prevExclusionReason != row.ExclusionReason)
-                {
-                    prevExclusionReason = row.ExclusionReason;
-                    DrawExclusionReson(canvas, y, row.ExclusionReason);
-                    y += 22;
-                }
-
-                // 動画データを描画
-                DrawVideoData(canvas, y, row);
-                y += 70;
-
-                // ページ下まで到達しそうだったら改ページ
-                // TODO:次の行の除外理由がブレークするかどうかも考慮に入れる必要あり
-                if (y + 70 > Utils.ImageHeight)
-                {
-                    prevExclusionReason = "";
-                    i++;
-                    break;
-                }
-            }
-
-            // ここに来たら保存
-            canvas.Flush();
-
-            string outputFile = Path.Combine(outputPath, $"jogai{page}.png");
-            using (var output = File.Create(outputFile))
-            {
-                surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
-            }
-
-            page++;
-
-            // データが終わりなら抜ける
-            if (i >= jogaiTable.Rows.Count) break;
-        }
-        */
-
-
-
-
     }
 
     /// <summary>
@@ -199,12 +136,27 @@ internal class GenJogaiImage
 
             jogaiList.Add(newRow);
 
+            Debug.WriteLine($"y:{y} ({row.VideoTitle})");
+
             y += 70;
-            if (y + 70 > Utils.ImageHeight)
+
+            bool isNextReasonBreak = false;
+            if (i < jogaiTable.Rows.Count - 1)
+            {
+                var nextRow = new JogaiRowData(jogaiTable.Rows[i + 1]);
+                if (nextRow.ExclusionReason != row.ExclusionReason)
+                {
+                    isNextReasonBreak = true;
+                }
+            }
+
+            if (y > Utils.ImageHeight - 54 - (isNextReasonBreak ? 10 : 0))
             {
                 page++;
                 y = InitY;
                 prevExclusionReason = "";
+
+                Debug.WriteLine($"改ページ {page}");
             }
         }
 
@@ -263,20 +215,14 @@ internal class GenJogaiImage
         // テキストの幅を取得
         float x = 35;
         var titleWidth = paint.MeasureText(row.Title);
-        var titleRightX = titleWidth + x + 15;
 
-        if (titleRightX > Utils.ImageWidth)
+        if (x + titleWidth > Utils.ImageWidth - 15)
         {
-            var sx = (Utils.ImageWidth - x) / (titleWidth + 10);
-            x = x * (1 / sx) - 5;
-
-            Debug.WriteLine($"枠を超えました sx:{sx}");
-            canvas.Scale(sx, 1);
+            var sx = (Utils.ImageWidth - 15) / (x + titleWidth);
+            paint.TextScaleX = sx;
         }
 
         canvas.DrawText(row.Title, x, y, paint);
-
-        //canvas.Scale(0);
     }
 
     void DrawVideoData(SKCanvas canvas, int y, JogaiRow row)
@@ -288,22 +234,13 @@ internal class GenJogaiImage
             Typeface = AzukiPFont,
             TextSize = 16,
             FakeBoldText = true,
-            //StrokeWidth = 1.1f,
-            //IsStroke = true,
-            //Style = SKPaintStyle.StrokeAndFill,
             IsAntialias = true,
         };
 
-        //canvas.DrawText(row.VideoTitle, 35, y, paint);
-
         // ポイント・マイリス・再生・作者
-        //canvas.DrawText($"{row.Points}pts　登録:{row.Mylist}　再生:{row.Play}　{row.Author}", 50, y + 20, paint);
         canvas.DrawText(row.Points, 50, y, paint);
 
         // 動画ID・投稿日
-        //canvas.DrawText($"{row.VideoID}  {row.FormattedPostDate}", 50, y + 40, paint);
         canvas.DrawText(row.VideoID, 50, y + 20, paint);
-
-        //Debug.WriteLine($"{row.VideoID}  Y:{y}  Ascent:{paint.FontMetrics.Ascent}  Top:{paint.FontMetrics.Top}  Bottom:{paint.FontMetrics.Bottom}  Descent:{paint.FontMetrics.Descent}");
     }
 }
