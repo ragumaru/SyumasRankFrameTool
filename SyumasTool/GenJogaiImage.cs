@@ -57,7 +57,7 @@ internal class GenJogaiImage
     SKTypeface AzukiPFont { get; } = SKTypeface.FromFile(Utils.AzukiPFontPath);
     const int InitY = 60;
 
-    internal void Gen(string outputPath, DataTable jogaiTable, IProgress<int> progress)
+    internal void Gen(string outputPath, DataTable jogaiTable)
     {
         List<JogaiRow> jogaiList = GenList(jogaiTable);
 

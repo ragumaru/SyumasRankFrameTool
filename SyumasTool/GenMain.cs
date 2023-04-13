@@ -56,7 +56,7 @@ internal class GenMain
                     Directory.CreateDirectory(rankingReversePath);
 
                     var rankGen = new GenRankFrameImage();
-                    //rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress);
+                    rankGen.Gen(rankingOutputPath, rankingReversePath, result.Tables[XlShRanking]!, progress, 95);
                 }
 
                 // 除外画像生成
@@ -66,7 +66,8 @@ internal class GenMain
                     Directory.CreateDirectory(jogaiOutputPath);
 
                     var genJogai = new GenJogaiImage();
-                    genJogai.Gen(jogaiOutputPath, result.Tables[XlShJogai]!, progress);
+                    genJogai.Gen(jogaiOutputPath, result.Tables[XlShJogai]!);
+                    progress.Report(96);
                 }
             }
             catch (IOException)

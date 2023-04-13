@@ -70,7 +70,7 @@ class GenRankFrameImage
     SKTypeface AzukiFont { get; } = SKTypeface.FromFile(Utils.AzukiFontPath);
     //RankingSettings Settings { get; init; } = GenRankFrameInfo.ReadInfo();
 
-    public bool Gen(string outputPath, string reverseOutputPath, DataTable ranking, IProgress<int> progress)
+    public bool Gen(string outputPath, string reverseOutputPath, DataTable ranking, IProgress<int> progress, int progressMax)
     {
         // よく使うあずきフォントはここで定義
         //AzukiFont = SKTypeface.FromFile(Utils.AzukiFontPath);
@@ -144,7 +144,7 @@ class GenRankFrameImage
                 }
             }
 
-            progress.Report((int)i * 100 / ranking.Rows.Count);
+            progress.Report((int)i * progressMax / ranking.Rows.Count);
         }
 
         return true;
