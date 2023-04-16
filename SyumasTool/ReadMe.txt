@@ -58,7 +58,7 @@
 msc.karatあっとgmail.com
 
 ■変更履歴
-2023/04/13  Ver 4.0 Beta3
+2023/04/16  Ver 4.0 Beta3
 ・除外リストの出力に対応。
 
 2023/03/27  Ver 4.0 Beta2
