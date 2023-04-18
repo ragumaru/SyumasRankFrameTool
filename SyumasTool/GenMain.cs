@@ -13,6 +13,8 @@ internal class GenMain
 {
     static readonly string XlShRanking = "ranking";
     static readonly string XlShJogai = "jogai";
+    static readonly string XlShSummary = "summary";
+    static readonly string XlShPlayRank = "play_rank";
 
     public static async Task<bool> MainProc(string excelFilePath, string outputFolder, IProgress<int> progress)
     {
@@ -69,6 +71,18 @@ internal class GenMain
                     genJogai.Gen(jogaiOutputPath, result.Tables[XlShJogai]!);
                     progress.Report(96);
                 }
+
+                // 集計概要・再生数順位
+                if (result.Tables.Contains(XlShSummary) && result.Tables.Contains(XlShPlayRank))
+                {
+                    var playRankOutputPath = Path.Combine(outputPath, "playRank");
+                    Directory.CreateDirectory(playRankOutputPath);
+
+                    var genPlayRank = new GenPlayRankImage();
+                    genPlayRank.Gen(playRankOutputPath, result.Tables[XlShSummary]!, result.Tables[XlShPlayRank]!);
+                    progress.Report(97);
+                }
+
             }
             catch (IOException)
             {

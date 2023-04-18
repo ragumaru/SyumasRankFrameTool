@@ -1,5 +1,6 @@
 ﻿using SkiaSharp;
 using System.CodeDom;
+using System.Data;
 using System.IO;
 
 namespace SyumasTool;
@@ -75,5 +76,11 @@ internal static class Utils
         {
             return null;
         }
+    }
+
+    public static int? GetExcelInt(DataRow row, int col)
+    {
+        if (row.IsNull(col)) return null;
+        return Convert.ToInt32(row[col]);
     }
 }
