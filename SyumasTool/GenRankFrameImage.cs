@@ -137,7 +137,7 @@ class GenRankFrameImage
                 // PNG形式で保存します。
                 canvas.Flush();
 
-                string outputFile = Path.Combine(outputPath, isRev ? "reverse" : "", $"ranking_{i}.png");
+                string outputFile = Path.Combine(outputPath, isRev ? "reverse" : "", $"ranking_{i:000}.png");
                 using (var output = File.Create(outputFile))
                 {
                     surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).SaveTo(output);
