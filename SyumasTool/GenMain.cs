@@ -15,6 +15,7 @@ internal class GenMain
     static readonly string XlShJogai = "jogai";
     static readonly string XlShSummary = "summary";
     static readonly string XlShPlayRank = "play_rank";
+    static readonly string XlShOutOfRange = "out_of_range_list";
 
     public static async Task<bool> MainProc(string excelFilePath, string outputFolder, IProgress<int> progress)
     {
@@ -83,6 +84,16 @@ internal class GenMain
                     progress.Report(97);
                 }
 
+                // 紹介圏外リスト
+                if (result.Tables.Contains(XlShOutOfRange))
+                {
+                    var outOfRangeOutputPath = Path.Combine(outputPath, "outOfRange");
+                    Directory.CreateDirectory(outOfRangeOutputPath);
+
+                    var genOutOfRange = new GenOutOfRangeImage();
+                    genOutOfRange.Gen(outOfRangeOutputPath, result.Tables[XlShOutOfRange]!);
+                    progress.Report(99);
+                }
             }
             catch (IOException)
             {

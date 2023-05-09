@@ -113,7 +113,7 @@ class GenPlayRankImage
         int y = 55;
 
         paint.TextSize = 20;
-        paint.FakeBoldText = false;
+        //paint.FakeBoldText = false;
 
         for (var i = 1; i < table.Rows.Count; i++)
         {
@@ -196,7 +196,7 @@ class GenPlayRankImage
         // データ
         y += 25;
 
-        paint.FakeBoldText = false;
+        //paint.FakeBoldText = false;
 
         int v = (Utils.ImageHeight - y) / (table.Rows.Count - 1);
 
@@ -247,6 +247,7 @@ class GenPlayRankImage
             Color = SKColors.Black,
             Typeface = AzukiPFont,
             TextSize = 18,
+            FakeBoldText = true,
             IsAntialias = true,
         };
 
