@@ -16,6 +16,7 @@ internal class GenMain
     static readonly string XlShSummary = "summary";
     static readonly string XlShPlayRank = "play_rank";
     static readonly string XlShOutOfRange = "out_of_range_list";
+    static readonly string XlShCutin = "cutin";
 
     public static async Task<bool> MainProc(string excelFilePath, string outputFolder, IProgress<int> progress)
     {
@@ -93,6 +94,17 @@ internal class GenMain
                     var genOutOfRange = new GenOutOfRangeImage();
                     genOutOfRange.Gen(outOfRangeOutputPath, result.Tables[XlShOutOfRange]!);
                     progress.Report(99);
+                }
+
+                // カットイン
+                if (result.Tables.Contains(XlShCutin))
+                {
+                    var cutInOutputPath = Path.Combine(outputPath, "cutin");
+                    Directory.CreateDirectory(cutInOutputPath);
+
+                    GenCutin cutin = new();
+                    cutin.Gen(cutInOutputPath, result.Tables[XlShCutin]!);
+                    progress.Report(100);
                 }
             }
             catch (IOException)
